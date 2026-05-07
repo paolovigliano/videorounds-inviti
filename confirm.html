@@ -1,33 +1,66 @@
-function doPost(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheetRisposte = ss.getSheetByName("RISPOSTE");
-  const sheetInviti = ss.getSheetByName("INVITI");
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conferma Invito</title>
+</head>
+<body>
+  <div style="max-width:520px;margin:40px auto;padding:30px;text-align:center;font-family:Georgia,serif;border:1px solid #b08a45;border-radius:18px;background:#f8f1e6;color:#3a1f1f;">
+    <h3>Invito riservato a</h3>
+    <h1 id="nome">Ospite</h1>
 
-  const data = JSON.parse(e.postData.contents);
+    <p style="font-size:20px;">Ti abbiamo riservato un posto.</p>
 
-  const id = data.id || "";
-  const nome = data.nome || "";
-  const risposta = data.risposta || "";
+    <p>
+      <strong>10 giugno 2026 – ore 19:30</strong><br>
+      Clivio di Scauro 4 – Roma<br><br>
+      Evento a numero chiuso<br>
+      Ingresso solo su invito
+    </p>
 
-  const timestamp = new Date();
+    <button onclick="inviaRisposta('SI')" style="width:100%;padding:16px;margin:10px 0;background:#6b1e1e;color:white;border:0;border-radius:10px;font-size:18px;">
+      Confermo la mia presenza
+    </button>
 
-  sheetRisposte.appendRow([
-    timestamp,
-    id,
-    nome,
-    risposta
-  ]);
+    <button onclick="inviaRisposta('NO')" style="width:100%;padding:16px;margin:10px 0;background:#d8c7a5;color:#3a1f1f;border:0;border-radius:10px;font-size:18px;">
+      Non riesco a partecipare
+    </button>
 
-  const invitiData = sheetInviti.getDataRange().getValues();
+    <p id="messaggio"></p>
+  </div>
 
-  for (let i = 1; i < invitiData.length; i++) {
-    if (String(invitiData[i][0]) === String(id)) {
-      sheetInviti.getRange(i + 1, 5).setValue(risposta);
-      break;
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbweBxVq54HnRRhPImUrePADwvE1IV_zccMFyYMQxyRwg0Cv_06FqT3au4rp6J5olyUF/exec";
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id") || "";
+    const nome = params.get("nome") || "Ospite";
+
+    document.getElementById("nome").innerText = nome;
+
+    function inviaRisposta(risposta) {
+      document.getElementById("messaggio").innerText = "Registrazione in corso...";
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify({
+          id: id,
+          nome: nome,
+          risposta: risposta
+        })
+      })
+      .then(() => {
+        document.getElementById("messaggio").innerHTML =
+          risposta === "SI"
+          ? "✅ Presenza confermata. Ti aspettiamo il 10 giugno."
+          : "Risposta registrata. Grazie.";
+      })
+      .catch(() => {
+        document.getElementById("messaggio").innerText =
+          "Errore durante la registrazione. Riprova.";
+      });
     }
-  }
-
-  return ContentService
-    .createTextOutput(JSON.stringify({ result: "ok" }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+  </script>
+</body>
+</html>

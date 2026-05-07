@@ -1,0 +1,33 @@
+function doPost(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetRisposte = ss.getSheetByName("RISPOSTE");
+  const sheetInviti = ss.getSheetByName("INVITI");
+
+  const data = JSON.parse(e.postData.contents);
+
+  const id = data.id || "";
+  const nome = data.nome || "";
+  const risposta = data.risposta || "";
+
+  const timestamp = new Date();
+
+  sheetRisposte.appendRow([
+    timestamp,
+    id,
+    nome,
+    risposta
+  ]);
+
+  const invitiData = sheetInviti.getDataRange().getValues();
+
+  for (let i = 1; i < invitiData.length; i++) {
+    if (String(invitiData[i][0]) === String(id)) {
+      sheetInviti.getRange(i + 1, 5).setValue(risposta);
+      break;
+    }
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ result: "ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
